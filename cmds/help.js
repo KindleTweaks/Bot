@@ -8,7 +8,7 @@ twi.slashcmd({
 
         const embed = twi.embed()
             .title("Help & Commands")
-            .description(`**/ping** - Check The Bot's Latency\n**/article** - Retrieve Information About Jailbreak Articles\n**/tea** - Play Tea (Red)\n**/help** - Display This Screen\n\nCredit to **penguins184**\nVersion **${process.env.version}**`)
+            .description(`**/ping** - Check The Bot's Latency\n**/article** - Retrieve Information About Jailbreak Articles\n**/package** - Retrieve Information About Jailbreak Software\n**/tea** - Play Tea (Red)\n**/help** - Display This Screen\n\nCredit to **penguins184**\nVersion **${process.env.version}**`)
             .color(twi.color("blurple"))
             .build();
         interaction.createMessage({ embeds: [embed], flags: 64 });
