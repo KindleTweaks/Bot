@@ -18,5 +18,13 @@
     {
         "name": "Homebrew Development",
         "body": "homebrew-development"
+    },
+    {
+        "name": "Installing KOReader",
+        "body": "installing-koreader"
+    },
+    {
+        "name": "Jailbreaking Pros and Cons",
+        "body": "pros-and-cons"
     }
 ]
