@@ -18,3 +18,4 @@ Installation Steps:
 2. Ensure you are on a WinterBroken or AdBroken device.
 3. Ensure you are on firmware `5.12.2.2` or above.
 4. Wait at least 5 minutes for the booklet to appear.
+5. Leave at least 100mb free.
