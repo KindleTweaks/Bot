@@ -5,6 +5,8 @@ const cooldown = [];
 const registry = "./assets/articles.json";
 const articles = JSON.parse(fs.readFileSync(registry, "utf-8"));
 
+const cache = {};
+
 const choices = articles.map(article => ({
     name: article.name,
     value: article.name
@@ -29,13 +31,24 @@ twi.slashcmd({
         }
     ],
     run: async function (interaction) {
-        if(cooldown.includes(interaction.user.id)) return interaction.createMessage({ embeds: [ twi.embed().title(":x: Please Wait 30 Seconds!").color(twi.color("blurple")).build() ], flags: 64 });
+        if (cooldown.includes(interaction.user.id)) {
+            return interaction.createMessage({
+                embeds: [
+                    twi.embed()
+                        .title(":x: Please Wait 30 Seconds!")
+                        .color(twi.color("blurple"))
+                        .build()
+                ],
+                flags: 64
+            });
+        }
+
         cooldown.push(interaction.user.id);
         setTimeout(() => {
             const index = cooldown.indexOf(interaction.user.id);
-            if(index > -1) cooldown.splice(index, 1);
+            if (index > -1) cooldown.splice(index, 1);
         }, 30000);
-        
+
         const articleName = interaction.data.options.getString("name");
         const article = find(articleName);
 
@@ -50,12 +63,14 @@ twi.slashcmd({
             });
         }
 
-        const mdPath = `./assets/articles/${article.body}.md`;
-        const content = fs.readFileSync(mdPath, "utf-8");
+        if (!cache[article.body]) {
+            const mdPath = `./assets/articles/${article.body}.md`;
+            cache[article.body] = fs.readFileSync(mdPath, "utf-8");
+        }
 
         const response = twi.embed()
             .title(article.name)
-            .description(content)
+            .description(cache[article.body])
             .color(twi.color("blurple"))
             .build();
 
