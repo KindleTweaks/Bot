@@ -30,5 +30,13 @@
     {
         "name": "Filler Files",
         "body": "filler-files"
+    },
+    {
+        "name": "Userspace Marker Files",
+        "body": "marker-files"
+    },
+    {
+        "name": "Renaming OTA Binaries",
+        "body": "renaming-otas"
     }
 ]
