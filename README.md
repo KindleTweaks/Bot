@@ -13,3 +13,7 @@
 - **/ping** - Check bot latency
 - **/article** - Retrieve a support article
 - **/tea** - Play red teaword
+
+## Notes
+
+Licensed under `CC BY-NC-SA 4.0`.
