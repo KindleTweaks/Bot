@@ -176,7 +176,7 @@ async function instance() {
     if(rag) return rag;
 
     const embeddings = new OllamaEmbeddings({
-        model: "nomic-embed-text",
+        model: "bge-m3",
         baseUrl: "http://localhost:11434"
     });
 
@@ -229,10 +229,23 @@ async function localRAG(q) {
     };
 
     console.log("Querying DB...");
-    const result = store ? await store.similaritySearch(q, 2) : [{ pageContent: "N/A, No Documents. Report Failure." }];
+    if (!store) return "N/A, No Documents. Report Failure.";
 
-    console.log("Found Relevant Chunks!");
-    return result.map(doc => doc.pageContent).join("\n\n");
+    const results = await store.similaritySearchWithScore(q, 4);
+    const valid = results
+        .filter(([doc, score]) => {
+            console.log(`Found Chunk with Relevance Score: ${score}.`);
+            return score < 0.65;
+        })
+        .map(([doc, score]) => doc.pageContent);
+
+    if(valid.length === 0) {
+        console.log("No Relevant Documentation Matches.");
+        return "N/A, No Documents. Report Failure.";
+    };
+
+    console.log(`Found ${valid} Highly Relevant Chunks!`);
+    return valid.join("\n\n");
 };
 
 const support = "1467990913547632773";
