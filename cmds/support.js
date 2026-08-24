@@ -340,6 +340,7 @@ client.on("interactionCreate", async (interaction) => {
                 contents: prompt 
             });
         } catch (e) {
+            console.log(`Error: Couldn't Call Gemini API: ${e}`);
             response.text = "Service Currently Unavailable. Sorry! :(";
         }
 

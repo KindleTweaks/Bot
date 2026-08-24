@@ -1,4 +1,5 @@
 onlyBuiltDependencies:
   - '@google/genai'
+  - faiss-node
   - hnswlib-node
   - protobufjs
