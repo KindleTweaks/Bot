@@ -203,7 +203,15 @@ async function instance() {
     console.log(`Generating Embeddings for ${chunks.length} Chunks...`);
     console.time("Embeddings");
 
-    rag = await HNSWLib.fromDocuments(chunks, embeddings);
+    rag = new HNSWLib(embeddings, { space: "cosine" });
+
+    const size = 512;
+    for (let i = 0; i < chunks.length; i+= size) {
+        const batch = chunks.slice(i, i + size);
+        console.log(`Processing Batch ${Math.floor(i / size) + 1}/${Math.ceil(chunks.length / size)}`); 
+
+        await rag.addDocuments(batch);
+    };
 
     console.timeEnd("Embeddings");
     await rag.save(vector);
