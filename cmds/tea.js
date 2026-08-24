@@ -1,15 +1,15 @@
 import { twi } from "../index.js";
 import fs from "fs";
 
-const CHANNEL_ID = "1427723942218563734";
-const COLOR = twi.color("blurple");
+const channel = "1427723942218563734";
+const color = twi.color("blurple");
 const games = [];
 
 const dictionary = JSON.parse(
     fs.readFileSync("./assets/dictionary.json", "utf8")
 );
 
-const LETTER_SETS = [
+const letters = [
     "art","str","ent","act","con","res","pro","com","pre","int",
     "est","dis","uni","tri","ter","for","rea","anc","ous","lin",
     "men","ver","ran","mis","man","ind","ant","lat","rom","der",
@@ -32,12 +32,12 @@ twi.slashcmd({
     name: "tea",
     description: "Play Tea (Red)!",
     run: async interaction => {
-        if (interaction.channelID !== CHANNEL_ID) {
+        if (interaction.channelID !== channel) {
             return interaction.createMessage({
                 embeds: [
                     twi.embed()
-                        .description(":x: You Cannot Do This In The Current Channel! Use <#"+CHANNEL_ID+">")
-                        .color(COLOR)
+                        .description(":x: You Cannot Do This In The Current Channel! Use <#"+channel+">")
+                        .color(color)
                         .build()
                 ]
             });
@@ -57,7 +57,7 @@ twi.slashcmd({
             .title("Tea :teapot:")
             .description(`<@${interaction.user.id}> Is Hosting A Game Of Tea!\nPlayers: ...`)
             .footer("Type The Longest Word Containing The 3 Letters Provided.")
-            .color(COLOR)
+            .color(color)
             .build();
 
         const msg = await interaction.createFollowup({
@@ -107,8 +107,6 @@ twi.handlecomponents({
     }
 });
 
-/* ================= LEAVE ================= */
-
 twi.handlecomponents({
     customid: "leavetea",
     run: async interaction => {
@@ -152,7 +150,7 @@ twi.handlecomponents({
             let round = 1;
 
             const startRound = () => {
-                const letters = LETTER_SETS[Math.floor(Math.random() * LETTER_SETS.length)];
+                const letters = letters[Math.floor(Math.random() * letters.length)];
                 const submissions = [];
 
                 twi.message(game.channel, {
@@ -161,7 +159,7 @@ twi.handlecomponents({
                             .title(letters)
                             .description(`Round ${round}/6`)
                             .footer(`ID: ${game.id}`)
-                            .color(COLOR)
+                            .color(color)
                             .build()
                     ]
                 });
@@ -203,7 +201,7 @@ twi.handlecomponents({
                                 twi.embed()
                                     .title("Game Over!")
                                     .description(`🏆 Winner: <@${game.players[0].id}>\n\n${board}`)
-                                    .color(COLOR)
+                                    .color(color)
                                     .build()
                             ]
                         });
