@@ -1,15 +1,19 @@
 import { twi, client } from "../index.js";
 import fetch from "node-fetch";
-import { ComponentTypes, TextInputStyles, InteractionTypes, MessageFlags, SeparatorSpacingSize, ButtonStyles, RoleFlags } from "oceanic.js";
+import { ComponentTypes, TextInputStyles, InteractionTypes, MessageFlags, SeparatorSpacingSize, ButtonStyles } from "oceanic.js";
 import fs from "fs";
 import path from "path";
 import { OllamaEmbeddings } from "@langchain/ollama";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
-import { GoogleGenAI } from "@google/genai";
+import { OpenAI } from "openai";
 import "dotenv/config";
 
-const ai = new GoogleGenAI({ apiKey: process.env.gemini });
+const ai = new OpenAI({
+    apiKey: process.env.hetzner,
+    baseURL: "https://inference.hetzner.com/api/v1"
+});
+
 let rag = null;
 let vector = path.resolve("./assets/hnswlib-cache");
 
@@ -175,7 +179,7 @@ twi.slashcmd({
 async function instance() {
     if(rag) return rag;
 
-    const embeddings = new OllamaEmbeddings({
+    const embeddings = new OllamaEmbeddings({ //ENSURE MODEL IS PULLED REGARDLESS OF HAVING LOCAL CACHE
         model: "bge-m3",
         baseUrl: "http://localhost:11434"
     });
@@ -189,9 +193,8 @@ async function instance() {
     console.log("No Cache DB Found, Generating Embeddings.... (This May Take a While)");
 
     const wiki = fs.readFileSync(path.resolve("./assets/wiki.txt"), "utf8");
-    const convo = fs.readFileSync(path.resolve("./assets/convo.txt"), "utf8");
 
-    const docs = [wiki, convo];
+    const docs = [wiki];
 
     const splitter = new RecursiveCharacterTextSplitter({
         chunkSize: 1200,
@@ -231,7 +234,7 @@ async function localRAG(q) {
     console.log("Querying DB...");
     if (!store) return "N/A, No Documents. Report Failure.";
 
-    const results = await store.similaritySearchWithScore(q, 4);
+    const results = await store.similaritySearchWithScore(q, 6);
     const valid = results
         .filter(([doc, score]) => {
             console.log(`Found Chunk with Relevance Score: ${score}.`);
@@ -244,7 +247,7 @@ async function localRAG(q) {
         return "N/A, No Documents. Report Failure.";
     };
 
-    console.log(`Found ${valid} Highly Relevant Chunks!`);
+    console.log(`Found ${valid.length} Highly Relevant Chunks!`);
     return valid.join("\n\n");
 };
 
@@ -337,24 +340,29 @@ client.on("interactionCreate", async (interaction) => {
         const query = interaction.message.components[1].components[3].content.slice(9, -1);
         
         const prompt = `
-            You are a KindleTweaks Helper Bot. Answer the user's Kindle jailbreaking/homebrew query using ONLY the provided context. If the context does not contain the answer, respond with "Service Currently Unavailable. Sorry! :("
-            Be concise, laconic, but do not omit any necessary details and stress them with markdown if necessary.
-
-            Context: 
+            Local Context: 
             ${await localRAG(query)}
 
             Question: ${query}
         `.trim();
 
-        let response;
+        let response = null;
         try {
-            response = await ai.models.generateContent({
-                model: "gemma-4-31b-it",
-                contents: prompt 
+            response = await ai.chat.completions.create({
+                model: "Qwen/Qwen3.6-35B-A3B-FP8",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a KindleTweaks Helper Bot. Answer the user's Kindle jailbreaking/homebrew query using ONLY the base overview & provided local context. If the context does not contain the answer, prioritise the overview, or respond with 'Service Currently Unavailable. Sorry! :(' Be laconic, problem solve but do not omit any necessary details and stress them with markdown if necessary: the user cannot ask followup questions so try to cover all bases. Use markdown links but wrap them in '<' and '>' to prevent embedding, e.g. [KindleModding](<https://kindlemodding.org>). Do not wrap markdown links in backticks, they will not render. If links are relative, e.g. './item', append 'https://kindlemodding.org' to them as a base and resolve the path properly. Do not link to the KindleTweaks discord, you run inside of it; if unsure tell the user to wait for a human helper to double check before trying anything. Link to everything else, e.g. scriptlets, external resources, as necessary..."
+                    }, {
+                        role: "user",
+                        content: prompt
+                    }
+                ]
             });
         } catch (e) {
-            console.log(`Error: Couldn't Call Gemini API: ${e}`);
-            response.text = "Service Currently Unavailable. Sorry! :(";
+            console.log(`Error: Couldn't Call Hetzner API: ${e}`);
+            response = { choices: [{ message: "" }] }; response.choices[0].message.content = "Service Currently Unavailable. Sorry! :(";
         }
 
         interaction.createFollowup({
@@ -363,7 +371,14 @@ client.on("interactionCreate", async (interaction) => {
                 type: ComponentTypes.CONTAINER,
                 components: [{
                     type: ComponentTypes.TEXT_DISPLAY,
-                    content: `# Quick Response\n${response.text}\n-# This Was Generated by AI. Check your Sources.`
+                    content: `# Quick Response 🧠`
+                }, {
+                    type: ComponentTypes.SEPARATOR,
+                    spacing: SeparatorSpacingSize.SMALL,
+                    divider: true
+                }, {
+                    type: ComponentTypes.TEXT_DISPLAY,
+                    content: `${response.choices[0].message.content}\n-# This Was Generated by AI. Check your Sources.`
                 }]
             }]
         })
