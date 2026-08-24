@@ -4,7 +4,6 @@ import { ComponentTypes, TextInputStyles, InteractionTypes, MessageFlags, Separa
 import fs from "fs";
 import path from "path";
 import { OllamaEmbeddings } from "@langchain/ollama";
-import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { HNSWLib } from "@langchain/community/vectorstores/hnswlib";
 import { GoogleGenAI } from "@google/genai";
@@ -201,8 +200,12 @@ async function instance() {
 
     const chunks = await splitter.createDocuments(docs);
 
-    rag = await MemoryVectorStore.fromDocuments(chunks, embeddings);
+    console.log(`Generating Embeddings for ${chunks.length} Chunks...`);
+    console.time("Embeddings");
 
+    rag = await HNSWLib.fromDocuments(chunks, embeddings);
+
+    console.timeEnd("Embeddings");
     await rag.save(vector);
     console.log("RAG DB Calculated, Saved to Disk.");
 
